@@ -203,6 +203,34 @@ services:
       - 5432
     volumes:
       - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Ensures the temporal DB exists when Postgres reuses an existing data directory (skips init).
+  temporal-postgresql-init:
+    image: postgres:16
+    container_name: temporal-postgresql-init
+    restart: "no"
+    depends_on:
+      temporal-postgresql:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: temporal
+      PGUSER: temporal
+      PGHOST: temporal-postgresql
+      PGDATABASE: postgres
+    command: >
+      psql -v ON_ERROR_STOP=1 -c "DO \$\$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'temporal') THEN
+          CREATE DATABASE temporal;
+        END IF;
+      END \$\$;"
+    networks:
+      - temporal-network
 
   temporal:
     container_name: temporal
@@ -210,8 +238,10 @@ services:
       - '7233:7233'
     image: temporalio/auto-setup:1.28.1
     depends_on:
-      - temporal-postgresql
-      - temporal-elasticsearch
+      temporal-postgresql-init:
+        condition: service_completed_successfully
+      temporal-elasticsearch:
+        condition: service_started
     environment:
       - DB=postgres12
       - DB_PORT=5432
