@@ -210,6 +210,7 @@ services:
       retries: 5
 
   # Ensures the temporal DB exists when Postgres reuses an existing data directory (skips init).
+  # Uses psql with ON_ERROR_STOP=0 so "already exists" does not fail the deploy; always exits 0.
   temporal-postgresql-init:
     image: postgres:16
     container_name: temporal-postgresql-init
@@ -222,7 +223,7 @@ services:
       PGUSER: temporal
       PGHOST: temporal-postgresql
       PGDATABASE: postgres
-    command: ["/bin/sh", "-c", "createdb temporal 2>/dev/null || true"]
+    command: ["/bin/sh", "-c", "psql -v ON_ERROR_STOP=0 -c 'CREATE DATABASE temporal;'; exit 0"]
     networks:
       - temporal-network
 
