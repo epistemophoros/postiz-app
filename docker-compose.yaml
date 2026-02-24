@@ -21,6 +21,8 @@ services:
       TEMPORAL_ADDRESS: ${TEMPORAL_ADDRESS:-temporal:7233}
       IS_GENERAL: ${IS_GENERAL:-true}
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
+      # Backend must listen on 3000; nginx in image listens on 5000. Do not override PORT in Coolify.
+      PORT: "3000"
 
       # === Storage
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
@@ -133,7 +135,7 @@ services:
       postiz-redis:
         condition: service_healthy
       temporal:
-        condition: service_started
+        condition: service_healthy
 
   postiz-postgres:
     image: postgres:17-alpine
@@ -259,9 +261,17 @@ services:
     networks:
       - temporal-network
     volumes:
+      # On Coolify: if Temporal exits with "permission denied" on this path, on the server run:
+      #   chmod -R a+rX /data/coolify/applications/<APP_UUID>/dynamicconfig
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig:z
     labels:
       kompose.volume.type: configMap
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c 'echo >/dev/tcp/127.0.0.1/7233' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
