@@ -121,7 +121,7 @@ services:
     ports:
       - "4007:5000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:5000/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qS -O/dev/null http://127.0.0.1:5000/ 2>&1 | grep -q '307\\|200' || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -242,6 +242,12 @@ services:
     ports:
       - '7233:7233'
     image: temporalio/auto-setup:1.28.1
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo '{}' > /tmp/dynamic_config.yaml
+        exec /etc/temporal/entrypoint.sh autosetup
     depends_on:
       temporal-postgresql-init:
         condition: service_completed_successfully
@@ -253,19 +259,14 @@ services:
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=temporal-postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - DYNAMIC_CONFIG_FILE_PATH=/tmp/dynamic_config.yaml
       - ENABLE_ES=true
       - ES_SEEDS=temporal-elasticsearch
       - ES_VERSION=v7
       - TEMPORAL_NAMESPACE=default
+      - BIND_ON_IP=0.0.0.0
     networks:
       - temporal-network
-    volumes:
-      # On Coolify: if Temporal exits with "permission denied" on this path, on the server run:
-      #   chmod -R a+rX /data/coolify/applications/<APP_UUID>/dynamicconfig
-      - ./dynamicconfig:/etc/temporal/config/dynamicconfig:z
-    labels:
-      kompose.volume.type: configMap
     healthcheck:
       test: ["CMD-SHELL", "timeout 2 bash -c 'echo >/dev/tcp/127.0.0.1/7233' 2>/dev/null || exit 1"]
       interval: 10s
