@@ -83,6 +83,9 @@ services:
       POSTIZ_OAUTH_CLIENT_SECRET: ${POSTIZ_OAUTH_CLIENT_SECRET:-}
       POSTIZ_OAUTH_SCOPE: ${POSTIZ_OAUTH_SCOPE:-openid profile email}
 
+      # HTTP mode (no HTTPS) – required for cookies to work over plain HTTP
+      NOT_SECURED: ${NOT_SECURED:-}
+
       # === Email (set in Coolify)
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
