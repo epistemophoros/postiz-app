@@ -21,7 +21,6 @@ services:
       TEMPORAL_ADDRESS: ${TEMPORAL_ADDRESS:-temporal:7233}
       IS_GENERAL: ${IS_GENERAL:-true}
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
-      PORT: "${PORT:-5000}"
 
       # === Storage
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
@@ -133,6 +132,8 @@ services:
         condition: service_healthy
       postiz-redis:
         condition: service_healthy
+      temporal:
+        condition: service_started
 
   postiz-postgres:
     image: postgres:17-alpine
@@ -258,7 +259,7 @@ services:
     networks:
       - temporal-network
     volumes:
-      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig:z
     labels:
       kompose.volume.type: configMap
 
