@@ -1,23 +1,23 @@
 # Docker Compose for Postiz
 # ---
-# Coolify: Set "Production" / "Environment Variables" in Coolify for this application.
-# Required in production: MAIN_URL, FRONTEND_URL, NEXT_PUBLIC_BACKEND_URL, JWT_SECRET.
-# Optional: override DATABASE_URL, REDIS_URL if using external DB/Redis; else defaults use internal postgres/redis.
-# Local: works as-is; override via .env or export for production URLs and secrets.
+# Environment is defined in this file via ${VAR:-default}. Override for production by
+# setting values in Coolify Production environment variables, or by using a .env file
+# next to this file. Preview environment can stay empty; the stack does not depend on it.
+# Local: works as-is with built-in defaults.
 services:
   postiz:
     image: ghcr.io/gitroomhq/postiz-app:latest
     container_name: postiz
     restart: always
     environment:
-      # === Required (set in Coolify Production Vars for production)
+      # === Required
       MAIN_URL: ${MAIN_URL:-http://localhost:4007}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4007}
       NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4007/api}
       JWT_SECRET: ${JWT_SECRET:-change-me-random-string-unique-to-every-install}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postiz-user:postiz-password@postiz-postgres:5432/postiz-db-local}
       REDIS_URL: ${REDIS_URL:-redis://postiz-redis:6379}
-      BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://localhost:3000}
+      BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://localhost:5000}
       TEMPORAL_ADDRESS: ${TEMPORAL_ADDRESS:-temporal:7233}
       IS_GENERAL: ${IS_GENERAL:-true}
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
